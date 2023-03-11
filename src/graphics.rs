@@ -94,39 +94,46 @@ impl GraphicsPlugin {
 
         commands.insert_resource(CharacterSheet {
             handle: atlas_handle,
-            player_down: [3, 4, 5],
-            player_left: [columns + 3, columns + 4, columns + 5],
-            player_right: [columns * 2 + 3, columns * 2 + 4, columns * 2 + 5],
-            player_up: [columns * 3 + 3, columns * 3 + 4, columns * 3 + 5],
-            bat_frames: [columns * 4 + 3, columns * 4 + 4, columns * 4 + 5],
+            player_down: [9, 10, 11],
+            player_left: [columns + 9, columns + 10, columns + 11],
+            player_right: [columns * 2 + 9, columns * 2 + 11, columns * 2 + 11],
+            player_up: [columns * 3 + 9, columns * 3 + 10, columns * 3 + 11],
+            bat_frames: [columns * 4 + 9, columns * 4 + 4, columns * 4 + 5],
             ghost_frames: [columns * 4 + 6, columns * 4 + 7, columns * 4 + 8],
         });
     }
 
     fn update_player_graphics(
-        mut sprites_query: Query<(&PlayerGraphics, &mut FrameAnimation), Changed<PlayerGraphics>>,
+        mut sprites_query: Query<(&PlayerGraphics, &mut FrameAnimation, &mut TextureAtlasSprite), Changed<PlayerGraphics>>,
         characters: Res<CharacterSheet>,
+        time: Res<Time>,
     ) {
-        for (graphics, mut animation) in sprites_query.iter_mut() {
+        for (graphics, mut animation, mut sprite) in sprites_query.iter_mut() {
             animation.frames = match graphics.facing {
                 FacingDirection::Up => characters.player_up.to_vec(),
                 FacingDirection::Down => characters.player_down.to_vec(),
                 FacingDirection::Left => characters.player_left.to_vec(),
                 FacingDirection::Right => characters.player_right.to_vec(),
+            };
+            animation.timer.tick(time.delta());
+            if animation.timer.just_finished() {
+                animation.current_frame = (animation.current_frame + 1) % animation.frames.len();
+                sprite.index = animation.frames[animation.current_frame];
             }
         }
     }
 
     fn frame_animation(
         mut sprites_query: Query<(&mut TextureAtlasSprite, &mut FrameAnimation)>,
+        keyboard: Res<Input<KeyCode>>, 
         time: Res<Time>,
     ) {
         for (mut sprite, mut animation) in sprites_query.iter_mut() {
             animation.timer.tick(time.delta());
-            if animation.timer.just_finished() {
+                        /*if animation.timer.just_finished() {
                 animation.current_frame = (animation.current_frame + 1) % animation.frames.len();
                 sprite.index = animation.frames[animation.current_frame];
-            }
+            }*/
         }
     }
 }
